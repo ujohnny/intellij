@@ -34,10 +34,10 @@ public class SyncStatusEditorTabTitleProvider implements EditorTabTitleProvider,
     }
     
     SyncStatus status = SyncStatusContributor.getSyncStatus(project, file);
-    if (status.equals(SyncStatus.UNSYNCED)) {
+    if (SyncStatus.UNSYNCED.equals(status)) {
       return file.getPresentableName() + " (unsynced)";
     }
-    if (status.equals(SyncStatus.IN_PROGRESS)) {
+    if (SyncStatus.IN_PROGRESS.equals(status)) {
       return file.getPresentableName() + " (syncing...)";
     }
     return null;
