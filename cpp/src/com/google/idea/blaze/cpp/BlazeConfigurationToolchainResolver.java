@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.NavigatableAdapter;
 
 import java.io.File;
@@ -64,8 +65,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Converts {@link CToolchainIdeInfo} to interfaces used by {@link
@@ -410,11 +413,7 @@ public final class BlazeConfigurationToolchainResolver {
           .submit(context);
       return null;
     }
-    ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
-    cFlagsBuilder.addAll(toolchainIdeInfo.getCCompilerOptions());
-
-    ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
-    cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
+    FlagsBuilder builder = getCompilerFlagBuilder(toolchainIdeInfo);
 
     ImmutableMap.Builder<String, String> compilerEnv = ImmutableMap.builder();
     compilerEnv.putAll(compilerWrapperEnvVars);
@@ -422,12 +421,34 @@ public final class BlazeConfigurationToolchainResolver {
         project,
         cCompilerWrapper,
         cppCompilerWrapper,
-        cFlagsBuilder.build(),
-        cppFlagsBuilder.build(),
+        builder.cFlagsBuilder().build(),
+        builder.cppFlagsBuilder().build(),
         compilerVersion,
         compilerEnv.build(),
         toolchainIdeInfo.getBuiltInIncludeDirectories());
   }
+
+  private static @NotNull FlagsBuilder getCompilerFlagBuilder(CToolchainIdeInfo toolchainIdeInfo) {
+    ImmutableList.Builder<String> cFlagsBuilder = ImmutableList.builder();
+    ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
+
+    var cCompilerOptions = toolchainIdeInfo.getCCompilerOptions();
+    var cppCompilerOptions = toolchainIdeInfo.getCppCompilerOptions();
+
+    if (Registry.is("bazel.cpp.filter.out.empty.compiler.options")) {
+      cFlagsBuilder.addAll(cCompilerOptions.stream().filter(Predicate.not(String::isEmpty))
+          .collect(Collectors.toList()));
+      cppFlagsBuilder.addAll(cppCompilerOptions.stream().filter(Predicate.not(String::isEmpty))
+          .collect(Collectors.toList()));
+    } else {
+      cFlagsBuilder.addAll(cCompilerOptions);
+      cppFlagsBuilder.addAll(cppCompilerOptions);
+    }
+
+    return new FlagsBuilder(cFlagsBuilder, cppFlagsBuilder);
+  }
+
+  private record FlagsBuilder(ImmutableList.Builder<String> cFlagsBuilder, ImmutableList.Builder<String> cppFlagsBuilder) {}
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {
     return BlazeExecutor.getInstance().submit(callable);

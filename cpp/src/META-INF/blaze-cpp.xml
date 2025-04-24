@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2021 The Bazel Authors. All rights reserved.
+  ~ Copyright 2025 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@
     <registryKey defaultValue="true" description="Allow external targets from source directories be imported in" key="bazel.cpp.sync.external.targets.from.directories"/>
     <registryKey defaultValue="false" description="Filter out some incompatible compiler flags (-include)" key="bazel.cpp.sync.workspace.filter.out.incompatible.flags"/>
     <registryKey defaultValue="true" description="Use _cpp_use_get_tool_for_action to get compiler executable" key="bazel.cpp.aspect._cpp_use_get_tool_for_action"/>
+    <registryKey defaultValue="false" description="Filter out empty compiler options while converting aspect info into IDE representation" key="bazel.cpp.filter.out.empty.compiler.options"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
